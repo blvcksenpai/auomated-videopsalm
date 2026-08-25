@@ -27,6 +27,7 @@ from .providers import (
 )
 from .audio_gateway import AudioGateway, AudioHealth, AudioStatus
 from .replay import AlignmentTrace, ReplayEvent, replay
+from .bible import BibleCatalog, BibleReference, BibleTranslation, parse_reference
 
 __all__ = [
     "AlignmentConfig",
@@ -54,4 +55,8 @@ __all__ = [
     "AlignmentTrace",
     "ReplayEvent",
     "replay",
+    "BibleCatalog",
+    "BibleReference",
+    "BibleTranslation",
+    "parse_reference",
 ]
