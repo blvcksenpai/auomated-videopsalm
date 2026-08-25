@@ -25,6 +25,8 @@ from .providers import (
     StreamingSpeechProvider,
     TranscriptToken,
 )
+from .audio_gateway import AudioGateway, AudioHealth, AudioStatus
+from .replay import AlignmentTrace, ReplayEvent, replay
 
 __all__ = [
     "AlignmentConfig",
@@ -46,4 +48,10 @@ __all__ = [
     "AudioFeatureProvider",
     "StreamingSpeechProvider",
     "TranscriptToken",
+    "AudioGateway",
+    "AudioHealth",
+    "AudioStatus",
+    "AlignmentTrace",
+    "ReplayEvent",
+    "replay",
 ]
