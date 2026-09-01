@@ -23,7 +23,9 @@ Install the optional API dependencies and run the local demo API on loopback:
 
 Applications should use `videopsalm.api.create_app(engine)` to inject their
 own `AlignmentEngine` instance. The API exposes `/status`, `/actions`, and
-`/evidence`, with live JSON snapshots on `/ws`.
+`/evidence`, with live JSON snapshots on `/ws`. Service-planning metadata is
+available via `/library` and `/setlists` so the local app can narrow
+candidate songs and pre-load an order of service.
 
 ## No-timer rule
 

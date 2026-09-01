@@ -10,6 +10,7 @@ from fastapi import Depends, FastAPI, HTTPException, Request, WebSocket, WebSock
 from pydantic import BaseModel, Field
 
 from .alignment import AlignmentEngine, Evidence
+from .library import SetList, SetListItem, SongLibrary
 from .models import (
     DisplayPosition,
     DisplayState,
@@ -135,7 +136,90 @@ class _ConnectionManager:
             self.disconnect(websocket)
 
 
-def create_app(engine: AlignmentEngine) -> FastAPI:
+
+class SongSectionPayload(BaseModel):
+    id: str = Field(min_length=1)
+    label: str = Field(min_length=1)
+    kind: str = "verse"
+    lines: list[str] = Field(min_length=1)
+
+    def to_domain(self) -> SongSection:
+        return SongSection(
+            id=self.id,
+            label=self.label,
+            lines=tuple(self.lines),
+            kind=SectionKind(self.kind),
+        )
+
+
+class SongPayload(BaseModel):
+    id: str = Field(min_length=1)
+    title: str = Field(min_length=1)
+    sections: list[SongSectionPayload] = Field(min_length=1)
+
+    def to_domain(self) -> Song:
+        return Song(
+            id=self.id,
+            title=self.title,
+            sections=tuple(section.to_domain() for section in self.sections),
+        )
+
+
+class SetListItemPayload(BaseModel):
+    kind: str
+    target_id: str = Field(min_length=1)
+    label: str = Field(min_length=1)
+
+    def to_domain(self) -> SetListItem:
+        return SetListItem(kind=self.kind, target_id=self.target_id, label=self.label)
+
+
+class SetListPayload(BaseModel):
+    id: str = Field(min_length=1)
+    name: str = Field(min_length=1)
+    items: list[SetListItemPayload] = Field(min_length=1)
+
+    def to_domain(self) -> SetList:
+        return SetList(
+            id=self.id,
+            name=self.name,
+            items=tuple(item.to_domain() for item in self.items),
+        )
+
+
+def _song_json(song: Song) -> dict[str, object]:
+    return {
+        "id": song.id,
+        "title": song.title,
+        "sections": [
+            {
+                "id": section.id,
+                "label": section.label,
+                "kind": section.kind.value,
+                "lines": list(section.lines),
+            }
+            for section in song.sections
+        ],
+    }
+
+
+def _setlist_json(setlist: SetList) -> dict[str, object]:
+    return {
+        "id": setlist.id,
+        "name": setlist.name,
+        "items": [
+            {"kind": item.kind, "target_id": item.target_id, "label": item.label}
+            for item in setlist.items
+        ],
+    }
+
+
+def create_app(
+    engine: AlignmentEngine,
+    *,
+    library: SongLibrary | None = None,
+    setlists: dict[str, SetList] | None = None,
+) -> FastAPI:
     """Create a local API bound to *engine*.
 
     Each application owns its WebSocket connection manager and engine
@@ -145,15 +229,58 @@ def create_app(engine: AlignmentEngine) -> FastAPI:
     api = FastAPI(title="VideoPsalm local API")
     api.state.engine = engine
     api.state.connections = _ConnectionManager()
+    api.state.library = library or SongLibrary()
+    api.state.setlists = setlists or {}
 
     def get_engine(request: Request) -> AlignmentEngine:
         return request.app.state.engine
+
+    def get_library(request: Request) -> SongLibrary:
+        return request.app.state.library
+
+    def get_setlists(request: Request) -> dict[str, SetList]:
+        return request.app.state.setlists
 
     @api.get("/status")
     async def status(
         current_engine: AlignmentEngine = Depends(get_engine),
     ) -> dict[str, object]:
         return serialize_state(current_engine)
+
+    @api.get("/library")
+    async def library_status(
+        current_library: SongLibrary = Depends(get_library),
+    ) -> dict[str, object]:
+        return {"songs": [_song_json(song) for song in current_library.items()], "count": len(current_library.items())}
+
+    @api.post("/library")
+    async def add_song_to_library(
+        payload: SongPayload,
+        current_library: SongLibrary = Depends(get_library),
+    ) -> dict[str, object]:
+        try:
+            current_library.add(payload.to_domain())
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        return {"song": _song_json(current_library.get(payload.id))}
+
+    @api.get("/setlists")
+    async def list_setlists(
+        current_setlists: dict[str, SetList] = Depends(get_setlists),
+    ) -> dict[str, object]:
+        return {"setlists": [_setlist_json(value) for value in current_setlists.values()] }
+
+    @api.post("/setlists")
+    async def create_setlist(
+        payload: SetListPayload,
+        current_setlists: dict[str, SetList] = Depends(get_setlists),
+    ) -> dict[str, object]:
+        try:
+            setlist = payload.to_domain()
+            current_setlists[setlist.id] = setlist
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        return {"setlist": _setlist_json(current_setlists[payload.id])}
 
     @api.post("/actions")
     @api.post("/action", include_in_schema=False)
