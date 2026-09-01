@@ -7,6 +7,7 @@ engine instance that should receive evidence and operator actions.
 from __future__ import annotations
 
 from fastapi import Depends, FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 
 from .alignment import AlignmentEngine, Evidence
@@ -103,6 +104,124 @@ def _recognition_json(state: RecognitionState) -> dict[str, object]:
         "pending_position": _position_json(state.pending_position),
         "reason": state.reason,
     }
+
+
+def _operator_console_html() -> str:
+    return """
+    <!doctype html>
+    <html lang="en">
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <title>VideoPsalm Operator Console</title>
+      <style>
+        body { font-family: sans-serif; margin: 0; background: #0f172a; color: #e2e8f0; }
+        .shell { max-width: 1100px; margin: 32px auto; padding: 24px; }
+        .grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 24px; }
+        .panel { background: #111827; border: 1px solid #334155; border-radius: 12px; padding: 18px; }
+        button { background: #2563eb; color: white; border: 0; border-radius: 8px; padding: 10px 14px; cursor: pointer; margin: 6px 6px 0 0; }
+        button.secondary { background: #374151; }
+        button.warn { background: #b45309; }
+        button.danger { background: #b91c1c; }
+        .display-box { min-height: 200px; display: flex; align-items: center; justify-content: center; text-align: center; background: #020617; border-radius: 12px; border: 1px solid #475569; font-size: clamp(1.8rem, 4vw, 3rem); padding: 18px; }
+        .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-top: 12px; }
+        .kpi { background: #0b1220; border-radius: 10px; border: 1px solid #334155; padding: 12px; }
+        code { background: #0b1220; border-radius: 6px; padding: 2px 6px; }
+      </style>
+    </head>
+    <body>
+      <div class="shell">
+        <h1>VideoPsalm Operator Console</h1>
+        <div class="grid">
+          <div class="panel">
+            <div id="display" class="display-box">Waiting for service…</div>
+            <div class="kpis">
+              <div class="kpi"><strong>Mode</strong><br /><span id="mode">searching</span></div>
+              <div class="kpi"><strong>Song</strong><br /><span id="song">—</span></div>
+              <div class="kpi"><strong>Position</strong><br /><span id="position">—</span></div>
+              <div class="kpi"><strong>Confidence</strong><br /><span id="confidence">0.0</span></div>
+            </div>
+          </div>
+          <div class="panel">
+            <h3>Controls</h3>
+            <div>
+              <button id="resume">Resume</button>
+              <button class="secondary" id="pause">Pause</button>
+              <button class="secondary" id="freeze">Freeze</button>
+              <button class="warn" id="blank">Blank</button>
+              <button class="danger" id="next">Next</button>
+              <button class="danger" id="prev">Previous</button>
+            </div>
+            <h3>Service</h3>
+            <div id="setlist"></div>
+            <h3>State</h3>
+            <pre id="state"></pre>
+          </div>
+        </div>
+      </div>
+      <script>
+        const stateEl = document.getElementById('state');
+        const modeEl = document.getElementById('mode');
+        const songEl = document.getElementById('song');
+        const positionEl = document.getElementById('position');
+        const confidenceEl = document.getElementById('confidence');
+        const displayEl = document.getElementById('display');
+        const setlistEl = document.getElementById('setlist');
+
+        function renderStatus(data) {
+          const display = data.display || {};
+          const recognition = data.recognition || {};
+          const songId = display.song_id || '—';
+          const position = display.position ? (display.position.section_index + ':' + display.position.line_index) : '—';
+          modeEl.textContent = recognition.mode || 'searching';
+          songEl.textContent = songId;
+          positionEl.textContent = position;
+          confidenceEl.textContent = Number(recognition.confidence || 0).toFixed(2);
+          let text = '—';
+          if (display.position && display.song_id) {
+            text = display.song_id + ' / ' + position;
+          }
+          if (display.visible === false) {
+            text = 'BLANK';
+          }
+          displayEl.textContent = text;
+          stateEl.textContent = JSON.stringify(data, null, 2);
+        }
+
+        async function fetchJson(url, options) {
+          const response = await fetch(url, options);
+          if (!response.ok) {
+            throw new Error('Request failed: ' + response.status);
+          }
+          return response.json();
+        }
+
+        async function refresh() {
+          const status = await fetchJson('/status');
+          renderStatus(status);
+          const setlists = await fetchJson('/setlists');
+          setlistEl.innerHTML = setlists.setlists.map((item) => '<div><strong>' + item.name + '</strong><ul>' + item.items.map((entry) => '<li>' + entry.label + '</li>').join('') + '</ul></div>').join('');
+        }
+
+        async function action(type) {
+          await fetchJson('/actions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type }) });
+          await refresh();
+        }
+
+        document.getElementById('resume').addEventListener('click', () => action('resume'));
+        document.getElementById('pause').addEventListener('click', () => action('pause'));
+        document.getElementById('freeze').addEventListener('click', () => action('freeze'));
+        document.getElementById('blank').addEventListener('click', () => action('blank'));
+        document.getElementById('next').addEventListener('click', () => action('skip_ahead'));
+        document.getElementById('prev').addEventListener('click', () => action('repeat'));
+
+        refresh();
+        const ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws');
+        ws.onmessage = (event) => { renderStatus(JSON.parse(event.data)); };
+      </script>
+    </body>
+    </html>
+    """
 
 
 def serialize_state(engine: AlignmentEngine) -> dict[str, object]:
@@ -241,6 +360,10 @@ def create_app(
     def get_setlists(request: Request) -> dict[str, SetList]:
         return request.app.state.setlists
 
+    @api.get("/")
+    async def root() -> HTMLResponse:
+        return HTMLResponse(_operator_console_html())
+
     @api.get("/status")
     async def status(
         current_engine: AlignmentEngine = Depends(get_engine),
@@ -325,6 +448,7 @@ def create_app(
 def demo_app() -> FastAPI:
     """Build a small local demo app for the documented Uvicorn command."""
 
+    library = SongLibrary()
     song = Song(
         id="demo",
         title="Demo",
@@ -332,4 +456,15 @@ def demo_app() -> FastAPI:
             SongSection("verse", "Verse", ("First line", "Second line"), SectionKind.VERSE),
         ),
     )
-    return create_app(AlignmentEngine(song))
+    library.add(song)
+    setlists = {
+        "sunday": SetList(
+            id="sunday",
+            name="Sunday service",
+            items=(
+                SetListItem("song", "demo", "Demo"),
+                SetListItem("passage", "john-3-16", "John 3:16"),
+            ),
+        )
+    }
+    return create_app(AlignmentEngine(song), library=library, setlists=setlists)
