@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field
 
 from .alignment import AlignmentEngine, Evidence
 from .library import SetList, SetListItem, SongLibrary
+from .service_plan import PassageItem, ServicePlan
 from .models import (
     DisplayPosition,
     DisplayState,
@@ -333,6 +334,59 @@ def _setlist_json(setlist: SetList) -> dict[str, object]:
     }
 
 
+
+class ServicePlanPayload(BaseModel):
+    id: str = Field(min_length=1)
+    name: str = Field(min_length=1)
+    translation_id: str = "web"
+    language: str = "en"
+    items: list[dict[str, str]] = Field(default_factory=list)
+
+    def to_domain(self) -> ServicePlan:
+        normalized: list[object] = []
+        for item in self.items:
+            kind = item.get('kind')
+            if kind == 'passage':
+                normalized.append(
+                    PassageItem(
+                        reference=item.get('reference', ''),
+                        label=item.get('label', ''),
+                        translation_id=item.get('translation_id', self.translation_id),
+                        language=item.get('language', self.language),
+                    )
+                )
+            elif kind == 'song':
+                normalized.append(SetListItem('song', item.get('target_id', ''), item.get('label', '')))
+            else:
+                normalized.append(SetListItem(item.get('kind', 'announcement'), item.get('target_id', ''), item.get('label', '')))
+        return ServicePlan(
+            id=self.id,
+            name=self.name,
+            translation_id=self.translation_id,
+            language=self.language,
+            items=tuple(normalized),
+        )
+
+
+def _service_plan_json(plan: ServicePlan) -> dict[str, object]:
+    return {
+        'id': plan.id,
+        'name': plan.name,
+        'translation_id': plan.translation_id,
+        'language': plan.language,
+        'items': [
+            {'kind': 'song', 'target_id': item.target_id, 'label': item.label} if getattr(item, 'kind', None) == 'song' else {
+                'kind': 'passage',
+                'reference': item.reference,
+                'label': item.label,
+                'translation_id': item.translation_id,
+                'language': item.language,
+            }
+            for item in plan.items
+        ],
+    }
+
+
 def create_app(
     engine: AlignmentEngine,
     *,
@@ -350,6 +404,7 @@ def create_app(
     api.state.connections = _ConnectionManager()
     api.state.library = library or SongLibrary()
     api.state.setlists = setlists or {}
+    api.state.service_plans = {}
 
     def get_engine(request: Request) -> AlignmentEngine:
         return request.app.state.engine
@@ -359,6 +414,9 @@ def create_app(
 
     def get_setlists(request: Request) -> dict[str, SetList]:
         return request.app.state.setlists
+
+    def get_service_plans(request: Request) -> dict[str, ServicePlan]:
+        return request.app.state.service_plans
 
     @api.get("/")
     async def root() -> HTMLResponse:
@@ -392,6 +450,24 @@ def create_app(
         current_setlists: dict[str, SetList] = Depends(get_setlists),
     ) -> dict[str, object]:
         return {"setlists": [_setlist_json(value) for value in current_setlists.values()] }
+
+    @api.get("/service-plans")
+    async def list_service_plans(
+        current_service_plans: dict[str, ServicePlan] = Depends(get_service_plans),
+    ) -> dict[str, object]:
+        return {"service_plans": [_service_plan_json(value) for value in current_service_plans.values()] }
+
+    @api.post("/service-plans")
+    async def create_service_plan(
+        payload: ServicePlanPayload,
+        current_service_plans: dict[str, ServicePlan] = Depends(get_service_plans),
+    ) -> dict[str, object]:
+        try:
+            plan = payload.to_domain()
+            current_service_plans[plan.id] = plan
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        return {"service_plan": _service_plan_json(current_service_plans[payload.id])}
 
     @api.post("/setlists")
     async def create_setlist(

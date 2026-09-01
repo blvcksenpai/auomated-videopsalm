@@ -71,6 +71,8 @@ __all__ = [
     "SetList",
     "SetListItem",
     "SongLibrary",
+    "PassageItem",
+    "ServicePlan",
 ]
 
 from .storage import (
@@ -82,3 +84,5 @@ from .storage import (
     lookup_verse,
     upsert_song,
 )
+
+from .service_plan import PassageItem, ServicePlan
