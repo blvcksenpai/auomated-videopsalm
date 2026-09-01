@@ -60,8 +60,25 @@ __all__ = [
     "BibleReference",
     "BibleTranslation",
     "parse_reference",
+    "connect",
+    "get_song_sections",
+    "import_bible_payload",
+    "import_openlyrics_xml",
+    "initialize",
+    "lookup_verse",
+    "upsert_song",
     "LibraryEntry",
     "SetList",
     "SetListItem",
     "SongLibrary",
 ]
+
+from .storage import (
+    connect,
+    get_song_sections,
+    import_bible_payload,
+    import_openlyrics_xml,
+    initialize,
+    lookup_verse,
+    upsert_song,
+)
