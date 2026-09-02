@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "corpus_id": "sanctuary-benchmark-sample-v1",
+  "privacy_notice": "Synthetic benchmark fixture for toolchain validation; replace with consented sanctuary data.",
+  "recordings": [
+    {
+      "id": "service-a",
+      "path": "audio/service-a.wav",
+      "split": "test",
+      "source_type": "mixer",
+      "sample_rate": 48000,
+      "channels": 2,
+      "duration_seconds": 120.0,
+      "consent_id": "fixture",
+      "language": "en",
+      "labels": [
+        {"start_seconds": 10.0, "end_seconds": 12.0, "event_type": "speech_reference", "reference": "John 3:16"},
+        {"start_seconds": 30.0, "end_seconds": 32.0, "event_type": "song_start", "song_id": "amazing-grace"},
+        {"start_seconds": 32.0, "end_seconds": 36.0, "event_type": "song_segment", "song_id": "amazing-grace", "section_index": 0, "line_index": 0},
+        {"start_seconds": 36.0, "end_seconds": 40.0, "event_type": "song_segment", "song_id": "amazing-grace", "section_index": 0, "line_index": 1},
+        {"start_seconds": 70.0, "end_seconds": 74.0, "event_type": "dropout"}
+      ]
+    },
+    {
+      "id": "service-b",
+      "path": "audio/service-b.wav",
+      "split": "test",
+      "source_type": "room",
+      "sample_rate": 48000,
+      "channels": 1,
+      "duration_seconds": 120.0,
+      "consent_id": "fixture",
+      "language": "en",
+      "labels": [
+        {"start_seconds": 15.0, "end_seconds": 18.0, "event_type": "speech_reference", "reference": "Romans 8:1"},
+        {"start_seconds": 40.0, "end_seconds": 43.0, "event_type": "song_start", "song_id": "blessed-assurance"},
+        {"start_seconds": 43.0, "end_seconds": 46.0, "event_type": "song_segment", "song_id": "blessed-assurance", "section_index": 0, "line_index": 0},
+        {"start_seconds": 46.0, "end_seconds": 49.0, "event_type": "song_segment", "song_id": "blessed-assurance", "section_index": 0, "line_index": 1}
+      ]
+    }
+  ]
+}

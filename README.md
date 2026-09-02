@@ -45,3 +45,18 @@ The project includes a local SQLite data layer for Bible text and song library c
 ## Real sanctuary corpus
 
 Use the private corpus workflow in `data/corpus/README.md` for consented recordings and timestamped labels. The repository includes only a manifest example, never raw audio. Validate a local manifest with `validate_manifest` before replay or benchmark work.
+
+## Provider comparison results
+
+Generate reproducible ASR/provider comparison outputs from a labeled corpus manifest and provider prediction files:
+
+```bash
+.venv/bin/python -m videopsalm.tools.compare_providers \
+  --manifest data/corpus/benchmark-sample/manifest.json \
+  --provider local_whisper=data/corpus/benchmark-sample/providers/local_whisper.json \
+  --provider hosted_streaming=data/corpus/benchmark-sample/providers/hosted_streaming.json \
+  --json-output data/corpus/benchmark-sample/results/provider-comparison.json \
+  --markdown-output docs/provider-comparison-results.md
+```
+
+Replace benchmark sample fixtures with real consented sanctuary recordings and real provider outputs for production decisions.

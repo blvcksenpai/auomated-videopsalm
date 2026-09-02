@@ -1,0 +1,11 @@
+[
+  {"recording_id":"service-a","start_seconds":10.6,"end_seconds":12.2,"event_type":"speech_reference","confidence":0.86,"reference":"John 3:16"},
+  {"recording_id":"service-a","start_seconds":30.1,"end_seconds":32.0,"event_type":"song_start","confidence":0.74,"song_id":"amazing-grace","candidate_song_ids":["blessed-assurance","amazing-grace","how-great-thou-art"]},
+  {"recording_id":"service-a","start_seconds":32.5,"end_seconds":36.1,"event_type":"song_segment","confidence":0.79,"song_id":"amazing-grace","section_index":0,"line_index":0},
+
+  {"recording_id":"service-b","start_seconds":15.4,"end_seconds":17.8,"event_type":"speech_reference","confidence":0.70,"reference":"Romans 8:1"},
+  {"recording_id":"service-b","start_seconds":40.4,"end_seconds":42.8,"event_type":"song_start","confidence":0.68,"song_id":"blessed-assurance","candidate_song_ids":["what-a-friend","blessed-assurance","amazing-grace"]},
+  {"recording_id":"service-b","start_seconds":43.8,"end_seconds":45.9,"event_type":"song_segment","confidence":0.73,"song_id":"blessed-assurance","section_index":0,"line_index":0},
+  {"recording_id":"service-b","start_seconds":46.8,"end_seconds":48.8,"event_type":"song_segment","confidence":0.64,"song_id":"blessed-assurance","section_index":0,"line_index":1},
+  {"recording_id":"service-b","start_seconds":92.0,"end_seconds":93.0,"event_type":"song_segment","confidence":0.51,"song_id":"blessed-assurance","section_index":2,"line_index":0}
+]

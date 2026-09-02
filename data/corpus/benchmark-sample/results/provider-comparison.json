@@ -1,0 +1,60 @@
+{
+  "manifest": "data/corpus/benchmark-sample/manifest.json",
+  "corpus_id": "sanctuary-benchmark-sample-v1",
+  "providers": [
+    {
+      "provider": "local_whisper",
+      "recordings": 2,
+      "speech_reference": {
+        "tp": 2,
+        "fp": 1,
+        "fn": 0,
+        "precision": 0.6666666666666666,
+        "recall": 1.0
+      },
+      "song_segments": {
+        "tp": 4,
+        "fp": 0,
+        "fn": 0,
+        "accuracy": 1.0
+      },
+      "song_identification": {
+        "samples": 2,
+        "top1": 1.0,
+        "top3": 1.0
+      },
+      "latency_ms": {
+        "median": 200.00000000000108,
+        "p95": 399.9999999999986
+      },
+      "false_trigger_rate_per_minute": 0.25
+    },
+    {
+      "provider": "hosted_streaming",
+      "recordings": 2,
+      "speech_reference": {
+        "tp": 2,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0
+      },
+      "song_segments": {
+        "tp": 3,
+        "fp": 1,
+        "fn": 1,
+        "accuracy": 0.75
+      },
+      "song_identification": {
+        "samples": 2,
+        "top1": 0.0,
+        "top3": 1.0
+      },
+      "latency_ms": {
+        "median": 599.9999999999997,
+        "p95": 799.9999999999972
+      },
+      "false_trigger_rate_per_minute": 0.25
+    }
+  ]
+}
