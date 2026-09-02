@@ -71,6 +71,10 @@ __all__ = [
     "SetList",
     "SetListItem",
     "SongLibrary",
+    "AudioRecording",
+    "CorpusLabel",
+    "CorpusManifest",
+    "validate_manifest",
     "PassageItem",
     "ServicePlan",
 ]
@@ -86,3 +90,5 @@ from .storage import (
 )
 
 from .service_plan import PassageItem, ServicePlan
+
+from .corpus import AudioRecording, CorpusLabel, CorpusManifest, validate_manifest

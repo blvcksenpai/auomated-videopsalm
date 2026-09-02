@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "corpus_id": "sanctuary-v1",
+  "privacy_notice": "Consented recordings for local recognition evaluation; no public redistribution.",
+  "recordings": [
+    {
+      "id": "service-001",
+      "path": "audio/service-001.wav",
+      "split": "test",
+      "source_type": "mixer",
+      "sample_rate": 48000,
+      "channels": 2,
+      "duration_seconds": 1800.0,
+      "consent_id": "consent-001",
+      "language": "en",
+      "retained_until": "2027-09-01",
+      "labels": [
+        {
+          "start_seconds": 120.0,
+          "end_seconds": 124.0,
+          "event_type": "song_start",
+          "text": null,
+          "reference": null,
+          "song_id": "licensed-song-id",
+          "section_index": null,
+          "line_index": null
+        },
+        {
+          "start_seconds": 124.0,
+          "end_seconds": 128.0,
+          "event_type": "song_segment",
+          "text": "first labeled lyric segment",
+          "reference": null,
+          "song_id": "licensed-song-id",
+          "section_index": 0,
+          "line_index": 0
+        },
+        {
+          "start_seconds": 600.0,
+          "end_seconds": 603.0,
+          "event_type": "speech_reference",
+          "text": "John three sixteen",
+          "reference": "John 3:16",
+          "song_id": null,
+          "section_index": null,
+          "line_index": null
+        }
+      ]
+    }
+  ]
+}

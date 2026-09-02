@@ -41,3 +41,7 @@ The project includes a local SQLite data layer for Bible text and song library c
 - Bible source candidates: https://github.com/thiagobodruk/bible (local import) and https://bible-api.com/ (prototype lookup).
 - Song source candidates: https://openlyrics.org/ and the OpenLyrics XML format for local, legally cleared worship songs.
 - Licensing: protect public display rights for any lyrics or Bible translations used in worship; the code supports licensing metadata and local content controls.
+
+## Real sanctuary corpus
+
+Use the private corpus workflow in `data/corpus/README.md` for consented recordings and timestamped labels. The repository includes only a manifest example, never raw audio. Validate a local manifest with `validate_manifest` before replay or benchmark work.
